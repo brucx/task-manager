@@ -1,0 +1,220 @@
+version: '3.8'
+
+# GPU worker configuration for 2 servers with 8 GPUs each
+# Deploy this on both servers with appropriate GPU assignments
+
+services:
+  # GPU Workers for Server 1 (GPU 0-7)
+  # Each GPU runs 2 concurrent tasks
+
+  gpu-worker-0:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1  # Update with actual Redis host
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=0
+      - GPU_ID=0
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-0@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+
+  gpu-worker-1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=1
+      - GPU_ID=1
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-1@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+
+  gpu-worker-2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=2
+      - GPU_ID=2
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-2@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['2']
+              capabilities: [gpu]
+
+  gpu-worker-3:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=3
+      - GPU_ID=3
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-3@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['3']
+              capabilities: [gpu]
+
+  gpu-worker-4:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=4
+      - GPU_ID=4
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-4@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['4']
+              capabilities: [gpu]
+
+  gpu-worker-5:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=5
+      - GPU_ID=5
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-5@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['5']
+              capabilities: [gpu]
+
+  gpu-worker-6:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=6
+      - GPU_ID=6
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-6@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['6']
+              capabilities: [gpu]
+
+  gpu-worker-7:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+    environment:
+      - REDIS_HOST=redis-server-1
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+      - CUDA_VISIBLE_DEVICES=7
+      - GPU_ID=7
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+      - ./models:/models
+    networks:
+      - task_network
+    command: celery -A src.core.celery_app worker -Q gpu-general,gpu-portrait,gpu-landscape -c 2 -n gpu-7@%h
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['7']
+              capabilities: [gpu]
+
+volumes:
+  shared_storage:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=nfs-server,rw  # Update with actual NFS server
+      device: ":/shared/tasks"
+
+networks:
+  task_network:
+    external: true  # Connect to shared network across servers

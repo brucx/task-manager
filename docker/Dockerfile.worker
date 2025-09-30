@@ -1,0 +1,26 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY pyproject.toml .
+COPY .python-version .
+COPY src/ ./src/
+
+# Install uv
+RUN pip install uv
+
+# Create virtual environment and install dependencies
+RUN uv venv --python 3.10 && \
+    . .venv/bin/activate && \
+    uv pip install -e .
+
+# Default command (override in docker-compose)
+CMD ["/app/.venv/bin/celery", "-A", "src.core.celery_app", "worker", "--loglevel=info"]
