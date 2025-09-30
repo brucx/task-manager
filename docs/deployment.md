@@ -50,7 +50,7 @@ sudo systemctl restart docker
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-org/task-manager.git
+git clone https://github.com/brucx/task-manager.git
 cd task-manager
 ```
 
