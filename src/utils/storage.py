@@ -55,6 +55,7 @@ def save_task_data(task_id: str, filename: str, data: bytes):
         data: Binary data to write
     """
     file_path = get_task_file_path(task_id, filename)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_bytes(data)
 
 
