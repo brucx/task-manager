@@ -100,33 +100,45 @@ API_PORT=8000
 
 For development and testing on a single machine:
 
-### 1. Start Services
+### 1. Start Base Services
 
 ```bash
-./scripts/deploy/start_services.sh
+./scripts/deploy/start_base.sh
 ```
 
 This starts:
 - Redis (message broker)
 - FastAPI API server
-- IO workers (20)
-- CPU workers (20)
 - Flower monitoring UI
 
-### 2. Verify Services
+### 2. Start Workers
 
 ```bash
-# Check service status
-docker-compose ps
+./scripts/deploy/start_workers.sh
+```
+
+This starts:
+- IO workers (20)
+- CPU workers (20)
+
+### 3. Verify Services
+
+```bash
+# Check base services status
+docker-compose -f docker-compose.base.yml ps
+
+# Check workers status
+docker-compose -f docker-compose.workers.yml ps
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.base.yml logs -f
+docker-compose -f docker-compose.workers.yml logs -f
 
 # Test API
 curl http://localhost:8000/health
 ```
 
-### 3. Access Interfaces
+### 4. Access Interfaces
 
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
@@ -134,7 +146,7 @@ curl http://localhost:8000/health
 - **Metrics**: http://localhost:8000/dashboard/metrics
 - **Flower**: http://localhost:5555
 
-### 4. Stop Services
+### 5. Stop Services
 
 ```bash
 ./scripts/deploy/stop_services.sh
@@ -147,22 +159,26 @@ curl http://localhost:8000/health
 ### Architecture
 
 ```
-Server 1: Redis + API + CPU/IO Workers
-Server 2: GPU Workers (8 GPUs)
+Server 1: Redis + API + Flower
+Server 2: CPU/IO Workers
 Server 3: GPU Workers (8 GPUs)
+Server 4: GPU Workers (8 GPUs)
 ```
 
 ### Network Setup
 
-All servers must be on same network:
+All servers must be on same network and able to communicate:
 
-**Server 1 (10.0.1.10):**
-- Redis: Port 6379
+**Server 1 (Base Services):**
+- Redis: Internal only (no host port exposure)
 - API: Port 8000
 - Flower: Port 5555
 
-**Server 2 & 3 (10.0.1.11, 10.0.1.12):**
-- GPU workers connect to Server 1 Redis
+**Server 2 (CPU/IO Workers):**
+- Connects to Server 1 Redis via Docker network
+
+**Server 3 & 4 (GPU Servers):**
+- GPU workers connect to Server 1 Redis via Docker network
 
 ### Shared Storage
 
@@ -197,26 +213,37 @@ echo "10.0.1.10:/shared/tasks /tmp/shared nfs defaults 0 0" | \
   sudo tee -a /etc/fstab
 ```
 
-### Server 1 Deployment
+### Server 1 Deployment (Base Services)
 
 ```bash
 # Update configuration
 cat > .env << EOF
-REDIS_HOST=10.0.1.10
+REDIS_HOST=redis
 REDIS_PORT=6379
 SHARED_TMP_PATH=/tmp/shared/tasks
 EOF
 
-# Start services
-./scripts/deploy/start_services.sh
+# Start base services
+./scripts/deploy/start_base.sh
 ```
 
-### Server 2 & 3 Deployment
+### Server 2 Deployment (CPU/IO Workers)
+
+```bash
+# Update workers compose file
+# Edit docker-compose.workers.yml:
+#   - REDIS_HOST=redis (will connect via shared network)
+
+# Start workers
+./scripts/deploy/start_workers.sh
+```
+
+### Server 3 & 4 Deployment (GPU Workers)
 
 ```bash
 # Update GPU compose file
 # Edit docker-compose.gpu.yml:
-#   - REDIS_HOST=10.0.1.10
+#   - REDIS_HOST=redis (will connect via shared network)
 
 # Place models in ./models/
 cp general_model.pth ./models/

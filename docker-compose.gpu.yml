@@ -217,4 +217,5 @@ volumes:
 
 networks:
   task_network:
-    external: true  # Connect to shared network across servers
+    driver: bridge
+    name: task_network

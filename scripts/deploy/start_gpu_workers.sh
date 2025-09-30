@@ -22,8 +22,8 @@ if [ "$GPU_COUNT" -ne 8 ]; then
 fi
 
 # Create models directory
-mkdir -p ./models
-echo "📁 Models directory: ./models"
+mkdir -p ./weights
+echo "📁 Models directory: ./weights"
 echo "   Place model files here:"
 echo "   - general_model.pth"
 echo "   - portrait_model.pth"

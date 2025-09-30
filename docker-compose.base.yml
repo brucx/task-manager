@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Redis broker and result backend
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - task_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI application
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - ":8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SHARED_TMP_PATH=/tmp/shared/tasks
+    volumes:
+      - shared_storage:/tmp/shared
+      - ./src:/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - task_network
+    command: /app/.venv/bin/uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Flower (Celery monitoring UI)
+  flower:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    ports:
+      - ":5555"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - task_network
+    command: /app/.venv/bin/celery -A src.core.celery_app flower --port=5555
+
+volumes:
+  redis_data:
+  shared_storage:
+
+networks:
+  task_network:
+    driver: bridge
+    name: task_network
